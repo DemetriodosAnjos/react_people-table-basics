@@ -1,8 +1,7 @@
-// Bloco Imports - PersonLink
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Person } from '../../types/Person';
 
-// Bloco PersonLink - componente reaproveitável
 export const PersonLink: React.FC<{ person?: Person }> = ({ person }) => {
   if (!person) {
     return <span>-</span>;
@@ -11,9 +10,9 @@ export const PersonLink: React.FC<{ person?: Person }> = ({ person }) => {
   const className = person.sex === 'f' ? 'has-text-danger' : '';
 
   return (
-    <a className={className} href={`#/people/${person.slug}`}>
+    <Link className={className} to={`/people/${person.slug}`}>
       {person.name}
-    </a>
+    </Link>
   );
 };
 

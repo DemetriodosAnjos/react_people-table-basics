@@ -1,40 +1,67 @@
-// Bloco Imports - hook usePeople
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Person } from '../types/Person';
 
-const API_URL =
-  'https://mate-academy.github.io/react_people-table/api/people.json';
+const API_URL = '/api/people';
 
-// Bloco usePeople - hook que busca pessoas e expõe reload
-export default function usePeople() {
+export function usePeople() {
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchPeople = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(API_URL);
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data: Person[] = await res.json();
-
-      setPeople(data);
-    } catch {
-      setPeople([]);
-      setError('Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    fetchPeople();
-  }, [fetchPeople]);
+    let cancelled = false;
+    const controller = new AbortController();
+    const { signal } = controller;
 
-  return { people, loading, error, reload: fetchPeople };
+    const load = async () => {
+      setLoading(true);
+      setError(undefined);
+
+      try {
+        const res = await fetch(API_URL, { signal });
+
+        if (!res.ok) {
+          throw new Error(`Network response was not ok: ${res.status}`);
+        }
+
+        const data = (await res.json()) as Person[];
+
+        if (!cancelled) {
+          setPeople(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          if (err instanceof Error) {
+            if (err.name === 'AbortError') {
+              setError('Request aborted');
+            } else {
+              setError(err.message);
+            }
+          } else {
+            setError(String(err));
+          }
+
+          setPeople([]);
+        }
+
+        /* eslint-disable-next-line no-console */
+        console.error(err);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  return { people, loading, error };
 }
+
+export default usePeople;

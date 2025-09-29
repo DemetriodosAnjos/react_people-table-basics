@@ -4,13 +4,20 @@ import { Person } from '../../types/Person';
 
 export const PersonLink: React.FC<{ person?: Person }> = ({ person }) => {
   if (!person) {
-    return <span>-</span>;
+    return null;
   }
 
-  const className = person.sex === 'f' ? 'has-text-danger' : '';
+  const sexClass =
+    person.sex === 'f' ? 'person-link--female' : 'person-link--male';
+  const bulmaClass =
+    person.sex === 'f' ? 'has-text-danger' : 'has-text-primary';
 
   return (
-    <Link className={className} to={`/people/${person.slug}`}>
+    <Link
+      className={`${sexClass} ${bulmaClass}`}
+      to={`/people/${person.slug}`}
+      data-cy={`person-link-${person.slug}`}
+    >
       {person.name}
     </Link>
   );
